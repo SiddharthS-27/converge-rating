@@ -8,7 +8,7 @@ import {
   FolderGit2, ArrowLeft, BarChart, Users,
   Mail, Building2, BookOpen, GraduationCap, Download, Plus,
   Inbox, Check, X, Clock, AlertTriangle, Star, Trash2,
-  UploadCloud, BadgeCheck
+  UploadCloud, BadgeCheck, Radio
 } from 'lucide-react';
 import { 
     getMyProjects, 
@@ -829,15 +829,18 @@ export const PostOpportunityTab: React.FC = () => {
         setLoading(true);
         try {
             const project = await createProject(form);
-            setResultProject(project);
             
-            // Immediately fetch matches
+            // Try fetching matches immediately. 
+            // We do this BEFORE setting resultProject so the UI doesn't flicker/show "No matches" for a split second.
+            let matchData = null;
             try {
-                const matchData = await getTeammateMatches(project.id);
-                setMatches(matchData);
+                matchData = await getTeammateMatches(project.id);
             } catch (err) {
                 console.warn("Could not fetch initial matches", err);
             }
+            
+            setMatches(matchData);
+            setResultProject(project);
 
         } catch (e) {
             console.error(e);
@@ -884,7 +887,8 @@ export const PostOpportunityTab: React.FC = () => {
                     </button>
                 </div>
 
-                {matches ? (
+                {/* Render Matches or Empty State */}
+                {matches && matches.matches && matches.matches.length > 0 ? (
                     <div>
                         <h3 className="text-xl font-bold text-slate-900 mb-4">AI Recommended Teammates</h3>
                         <MatchResultsView 
@@ -895,8 +899,10 @@ export const PostOpportunityTab: React.FC = () => {
                         />
                     </div>
                 ) : (
-                    <div className="flex justify-center p-12">
-                         <Loader2 className="w-8 h-8 animate-spin text-converge-blue" />
+                    <div className="flex flex-col items-center justify-center p-12 bg-slate-50 border border-dashed border-slate-200 rounded-xl text-slate-400">
+                         <Sparkles className="w-10 h-10 mb-2 opacity-50" />
+                         <p>Project is live. No immediate matches found in the current pool.</p>
+                         <p className="text-xs">New candidates will be matched as they join.</p>
                     </div>
                 )}
             </div>
@@ -904,7 +910,23 @@ export const PostOpportunityTab: React.FC = () => {
     }
 
     return (
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto relative">
+            
+            {/* BROADCASTING OVERLAY */}
+            {loading && (
+                <div className="absolute inset-0 bg-white/90 backdrop-blur-[2px] z-50 flex flex-col items-center justify-center rounded-xl animate-in fade-in duration-300">
+                    <div className="w-16 h-16 relative mb-4">
+                        <div className="absolute inset-0 border-4 border-slate-100 rounded-full"></div>
+                        <div className="absolute inset-0 border-4 border-converge-blue rounded-full border-t-transparent animate-spin"></div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <Radio className="w-6 h-6 text-converge-blue animate-pulse" />
+                        </div>
+                    </div>
+                    <h3 className="text-xl font-display font-bold text-slate-900">Broadcasting Opportunity</h3>
+                    <p className="text-slate-500 text-sm font-mono mt-2 animate-pulse">Running Neural Matching Algorithm...</p>
+                </div>
+            )}
+
             <div className="mb-8">
                 <h2 className="text-2xl font-bold text-slate-900">Post Opportunity</h2>
                 <p className="text-slate-500">Define your project parameters to broadcast to the network.</p>
@@ -922,6 +944,7 @@ export const PostOpportunityTab: React.FC = () => {
                         onChange={e => setForm({...form, title: e.target.value})}
                         className="w-full px-4 py-3 bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:border-converge-blue transition-colors"
                         placeholder="e.g. Autonomous Drone Navigation"
+                        disabled={loading}
                     />
                 </div>
 
@@ -934,6 +957,7 @@ export const PostOpportunityTab: React.FC = () => {
                                 value={form.type}
                                 onChange={e => setForm({...form, type: e.target.value})}
                                 className="w-full px-4 py-3 bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:border-converge-blue appearance-none"
+                                disabled={loading}
                             >
                                 <option value="PROJECT">Project</option>
                                 <option value="RESEARCH">Research Paper</option>
@@ -952,6 +976,7 @@ export const PostOpportunityTab: React.FC = () => {
                             onChange={e => setForm({...form, domains: e.target.value})}
                             className="w-full px-4 py-3 bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:border-converge-blue"
                             placeholder="e.g. AI, IoT, FinTech"
+                            disabled={loading}
                         />
                     </div>
                 </div>
@@ -966,6 +991,7 @@ export const PostOpportunityTab: React.FC = () => {
                         rows={5}
                         className="w-full px-4 py-3 bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:border-converge-blue resize-none"
                         placeholder="Describe the problem, solution, and goals..."
+                        disabled={loading}
                     />
                 </div>
 
@@ -980,6 +1006,7 @@ export const PostOpportunityTab: React.FC = () => {
                             onChange={e => setForm({...form, skills: e.target.value})}
                             className="w-full px-4 py-3 bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:border-converge-blue"
                             placeholder="e.g. Python, React, TensorFlow"
+                            disabled={loading}
                         />
                     </div>
                     <div>
@@ -990,6 +1017,7 @@ export const PostOpportunityTab: React.FC = () => {
                             onChange={e => setForm({...form, preferredTech: e.target.value})}
                             className="w-full px-4 py-3 bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:border-converge-blue"
                             placeholder="e.g. AWS, Docker"
+                            disabled={loading}
                         />
                     </div>
                 </div>
@@ -1006,6 +1034,7 @@ export const PostOpportunityTab: React.FC = () => {
                                 onChange={e => setForm({...form, github: e.target.value})}
                                 className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:border-converge-blue"
                                 placeholder="https://github.com/..."
+                                disabled={loading}
                             />
                          </div>
                     </div>
@@ -1014,7 +1043,7 @@ export const PostOpportunityTab: React.FC = () => {
                             <div className={`w-12 h-6 rounded-full p-1 transition-colors ${form.isPublic ? 'bg-converge-blue' : 'bg-gray-300'}`}>
                                 <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${form.isPublic ? 'translate-x-6' : ''}`}></div>
                             </div>
-                            <input type="checkbox" className="hidden" checked={form.isPublic} onChange={e => setForm({...form, isPublic: e.target.checked})} />
+                            <input type="checkbox" className="hidden" checked={form.isPublic} onChange={e => setForm({...form, isPublic: e.target.checked})} disabled={loading} />
                             <span className="text-sm font-bold text-slate-700">Public Visibility</span>
                         </label>
                     </div>
@@ -1214,6 +1243,11 @@ export const MyProjectsTab: React.FC<MyProjectsTabProps> = ({ projects, loading,
     const [selectedProject, setSelectedProject] = useState<Opportunity | null>(null);
     const [viewingTeammate, setViewingTeammate] = useState<Teammate | null>(null);
     
+    // NEW: State for showing matches inside My Projects tab
+    const [matches, setMatches] = useState<MLMatchResponse | null>(null);
+    const [viewingCandidate, setViewingCandidate] = useState<number | null>(null);
+    const [sentRequests, setSentRequests] = useState<Set<number>>(new Set());
+
     // Refresh details when selectedProject is active, to get updated teammates
     const refreshSelected = async () => {
         if(selectedProject) {
@@ -1223,6 +1257,32 @@ export const MyProjectsTab: React.FC<MyProjectsTabProps> = ({ projects, loading,
             } catch(e) { console.error(e); }
         }
     }
+
+    // Fetch matches if the current user is the owner and project is active
+    useEffect(() => {
+        if (selectedProject && currentUser && selectedProject.ownerEmail === currentUser.email && selectedProject.status !== 'COMPLETED') {
+            getTeammateMatches(selectedProject.id)
+                .then(data => setMatches(data))
+                .catch(err => console.error("Failed to load matches", err));
+        } else {
+            setMatches(null);
+        }
+    }, [selectedProject, currentUser]);
+
+    const handleAddTeammate = async (candidateId: number) => {
+        if (!selectedProject) return;
+        try {
+            const profile = await getUserProfileById(candidateId);
+            if (profile && profile.email) {
+                await addTeammate(selectedProject.id, profile.email);
+                setSentRequests(prev => new Set(prev).add(candidateId));
+                alert(`Invite sent to ${profile.fullName || 'Candidate'}`);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Failed to send invite");
+        }
+    };
 
     const handleComplete = async (projectId: string) => {
         if(window.confirm("Are you sure? This will mark the project as completed and send rating requests to all teammates.")) {
@@ -1237,7 +1297,22 @@ export const MyProjectsTab: React.FC<MyProjectsTabProps> = ({ projects, loading,
         }
     }
 
-    // REMOVED INLINE RATING LOGIC HERE to strictly follow "Project owner should also rate after clicking the notification in his/her inbox"
+    if (viewingTeammate && selectedProject) {
+        // Fallback safety, though rating now happens via Inbox mostly
+        return (
+            <RatingView 
+                teammate={viewingTeammate}
+                projectId={selectedProject.id}
+                raterId={currentUser?.id || ''}
+                onClose={() => { setViewingTeammate(null); refreshSelected(); }}
+            />
+        );
+    }
+
+    // NEW: Handle Candidate Detail View (from AI suggestions)
+    if (viewingCandidate) {
+        return <TeammateDetailView userId={viewingCandidate} onBack={() => setViewingCandidate(null)} />;
+    }
 
     if (selectedProject) {
         const isOwner = currentUser && selectedProject.ownerEmail === currentUser.email;
@@ -1305,7 +1380,6 @@ export const MyProjectsTab: React.FC<MyProjectsTabProps> = ({ projects, loading,
                                                 <p className="text-xs text-slate-500">{member.email}</p>
                                             </div>
                                         </div>
-                                        {/* REMOVED: Direct Rating Button. Users must check Inbox after completion. */}
                                     </div>
                                 ))
                             ) : (
@@ -1313,6 +1387,22 @@ export const MyProjectsTab: React.FC<MyProjectsTabProps> = ({ projects, loading,
                             )}
                         </div>
                     </div>
+
+                    {/* NEW: AI Matches Section (Only for Owner + Active Project) */}
+                    {isOwner && !isCompleted && matches && (
+                        <div className="p-6 border-t border-gray-200 bg-gradient-to-b from-white to-slate-50">
+                            <h3 className="text-lg font-display font-bold text-slate-900 mb-4 flex items-center gap-2">
+                                <Sparkles className="w-5 h-5 text-converge-violet" /> 
+                                Top AI Recommendations
+                            </h3>
+                            <MatchResultsView 
+                                matchData={matches} 
+                                onSelectCandidate={setViewingCandidate}
+                                onAddTeammate={handleAddTeammate}
+                                sentRequests={sentRequests}
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
         )
